@@ -1,0 +1,76 @@
+@prefix bkn:          <http://www.blankNode.org/variables#> .
+@prefix dash:         <http://datashapes.org/dash#> .
+@prefix dc:           <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms:      <http://purl.org/dc/terms/> .
+@prefix ex:           <http://www.example.org#> .
+@prefix graphql:      <http://datashapes.org/graphql#> .
+@prefix lfn:          <http://www.dotnetrdf.org/leviathan#> .
+@prefix math:         <http://www.w3.org/2005/xpath-functions/math#> .
+@prefix meteo-ex:     <http://www.meteo-example.org#> .
+@prefix owl:          <http://www.w3.org/2002/07/owl#> .
+@prefix prefix:       <http://qudt.org/vocab/prefix/> .
+@prefix prov:         <http://www.w3.org/ns/prov#> .
+@prefix qkdv:         <http://qudt.org/vocab/dimensionvector/> .
+@prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .
+@prefix qudt:         <http://qudt.org/schema/qudt/> .
+@prefix rdf:          <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:         <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:           <http://www.w3.org/ns/shacl#> .
+@prefix sh-math:      <http://www.inrae.fr/shacl-math/> .
+@prefix skos:         <http://www.w3.org/2004/02/skos/core#> .
+@prefix sosa:         <http://www.w3.org/ns/sosa/> .
+@prefix sou:          <http://qudt.org/vocab/sou/> .
+@prefix sparql:       <http://datashapes.org/sparql#> .
+@prefix swa:          <http://topbraid.org/swa#> .
+@prefix time:         <http://www.w3.org/2006/time#> .
+@prefix tosh:         <http://topbraid.org/tosh#> .
+@prefix unit:         <http://qudt.org/vocab/unit/> .
+@prefix vaem:         <http://www.linkedmodel.org/schema/vaem#> .
+@prefix voag:         <http://voag.linkedmodel.org/schema/voag#> .
+@prefix xfn:          <http://www.w3.org/2005/xpath-functions#> .
+@prefix xml:          <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd:          <http://www.w3.org/2001/XMLSchema#> .
+
+ex:g2   ex:avgVPD  0 .
+
+<http://group.org/featureOfInterest/par05_p/plant/plant2/month-from-date/07>
+        rdf:type                   sh-math:ObservationsPlantGroup ;
+        ex:DailyRs                 0.5346534654e0 ;
+        ex:avgVPD                  0 ;
+        ex:hasPlant                ex:plant2 ;
+        sh-math:dateGroupIRI       "/month-from-date/07" ;
+        sh-math:groupByFeatureOfInterest
+                ex:Phenoarch ;
+        sh-math:groupDateMethod    xfn:month-from-date ;
+        sh-math:groupDateValue     07 ;
+        sh-math:hasMember          ex:o8 ;
+        sh-math:plantURI           "/plant/plant2" ;
+        sosa:hasFeatureOfInterest  ex:par05_p .
+
+<http://group.org/featureOfInterest/par03_p/plant/plant1/month-from-date/07>
+        rdf:type                   sh-math:ObservationsPlantGroup ;
+        ex:DailyRs                 6.237623763E-4 ;
+        ex:avgVPD                  0 ;
+        ex:hasPlant                ex:plant1 ;
+        sh-math:dateGroupIRI       "/month-from-date/07" ;
+        sh-math:groupByFeatureOfInterest
+                ex:Phenoarch ;
+        sh-math:groupDateMethod    xfn:month-from-date ;
+        sh-math:groupDateValue     07 ;
+        sh-math:hasMember          ex:o7 , ex:o6 ;
+        sh-math:plantURI           "/plant/plant1" ;
+        sosa:hasFeatureOfInterest  ex:par03_p .
+
+<http://group.org/featureOfInterest/par03_p/plant/plant3/month-from-date/07>
+        rdf:type                   sh-math:ObservationsPlantGroup ;
+        ex:DailyRs                 8.910891090000002E-5 ;
+        ex:avgVPD                  0 ;
+        ex:hasPlant                ex:plant3 ;
+        sh-math:dateGroupIRI       "/month-from-date/07" ;
+        sh-math:groupByFeatureOfInterest
+                ex:Phenoarch ;
+        sh-math:groupDateMethod    xfn:month-from-date ;
+        sh-math:groupDateValue     07 ;
+        sh-math:hasMember          ex:o6 ;
+        sh-math:plantURI           "/plant/plant3" ;
+        sosa:hasFeatureOfInterest  ex:par03_p .

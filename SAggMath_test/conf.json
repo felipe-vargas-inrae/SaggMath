@@ -1,0 +1,12 @@
+{
+    "experimentName": "Aggregations VPD experiment",
+    "rootPath": "/home/mistea/PhD/study/thesis/tutorials/OWL examples/SHACL/shacl-1.4.2/shacl-online/src/main/resources/SAggMath_test/",
+    "graphPath": "data.ttl",
+    "shapePath": "shape_aggregations.ttl",
+    "queryPath" : "query.sparql",
+    "outInferencePath" :"output/inference.ttl",
+    "outShape" :"output/out_shape.ttl",
+    "outReportPath": "output/report.json",
+    "outResultSet" : "output/result_set.csv",
+    "method" : "VIRTUAL"
+} 

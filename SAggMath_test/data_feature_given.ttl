@@ -1,0 +1,51 @@
+@prefix  rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix  xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix  time: <http://www.w3.org/2006/time#>.
+@prefix  sosa: <http://www.w3.org/ns/sosa/>.
+
+@prefix  unit: <http://qudt.org/vocab/unit/>.
+@prefix  qudt: <http://qudt.org/schema/qudt/>.
+@prefix sparql: <http://datashapes.org/sparql#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+# jena ARQ functions
+@prefix lfn: <http://www.dotnetrdf.org/leviathan#>.
+@prefix xfn: <http://www.w3.org/2005/xpath-functions#>.
+
+@prefix sh-math:   <http://www.inrae.fr/shacl-math/> .
+
+@prefix  ex: <http://www.example.org#>.
+
+<http://www.example.org>
+    rdf:type owl:Ontology .
+
+
+ex:o1 a sosa:Observation.
+ex:o2 a sosa:Observation.
+ex:o3 a sosa:Observation.
+
+
+ex:g1 a sh-math:ObservationsGroup;
+	sh-math:groupBy xfn:month-from-date;
+	sosa:hasFeatureOfInterest ex:Phenoarch;
+	rdfs:comments "a group of measurements concerning the experiments in the phenoarch platform".
+	# sh-math:hasMember ex:o1, ex:o2, ex:o3. # it can be automated for a rule, OWL, SWRL? 
+
+ex:o1 sosa:observedProperty ex:Temperature;
+sosa:hasResult [a qudt:QuantityValue, sosa:Result ; qudt:numericValue "279.85"^^xsd:double ; qudt:unit unit:K];
+sosa:resultTime "2016-01-01T00:00:00Z"^^xsd:dateTimeStamp ;
+sosa:hasFeatureOfInterest ex:Phenoarch.
+
+ex:o2 sosa:observedProperty ex:Temperature;
+sosa:hasResult [a qudt:QuantityValue, sosa:Result ; qudt:numericValue "250.52"^^xsd:double ; qudt:unit unit:K];
+sosa:resultTime "2016-01-02T00:00:00Z"^^xsd:dateTimeStamp ;
+sosa:hasFeatureOfInterest ex:Phenoarch.
+
+ex:o3 sosa:observedProperty ex:Temperature;
+sosa:hasResult [a qudt:QuantityValue, sosa:Result ; qudt:numericValue "15.52"^^xsd:double ; qudt:unit unit:DEG_C];
+sosa:resultTime "2016-02-03T00:00:00Z"^^xsd:dateTimeStamp ;
+sosa:hasFeatureOfInterest ex:Phenoarch.
+
+# define filters to which dates correspond: (a) it can be from the data (easy approach), 
+# (b) it can be extracted from the query as a query parameter. 

@@ -1,0 +1,137 @@
+@prefix  rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix  xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix  time: <http://www.w3.org/2006/time#>.
+@prefix  sosa: <http://www.w3.org/ns/sosa/>.
+
+@prefix  unit: <http://qudt.org/vocab/unit/>.
+@prefix  qudt: <http://qudt.org/schema/qudt/>.
+@prefix sparql: <http://datashapes.org/sparql#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+# jena ARQ functions
+@prefix lfn: <http://www.dotnetrdf.org/leviathan#>.
+@prefix xfn: <http://www.w3.org/2005/xpath-functions#>.
+
+@prefix sh-math:   <http://www.inrae.fr/shacl-math/> .
+
+@prefix  ex: <http://www.example.org#>.
+
+<http://www.example.org>
+    rdf:type owl:Ontology .
+
+
+ex:o1 a sosa:Observation.
+ex:o2 a sosa:Observation.
+ex:o3 a sosa:Observation.
+
+ex:o4 a sosa:Observation.
+ex:o5 a sosa:Observation.
+ex:o6 a sosa:Observation.
+ex:o7 a sosa:Observation.
+ex:o8 a sosa:Observation.
+ex:o9 a sosa:Observation.
+
+# ex:g1 a sh-math:ObservationsGroup;
+# 	sh-math:groupByTime xfn:month-from-date;
+# 	sh-math:groupByFeatureOfInterest ex:Phenoarch;
+# 	rdfs:comments "a group of measurements concerning the experiments in the phenoarch platform";
+# 	sh-math:initTime "2010-01-01T00:00:00Z"^^xsd:dateTimeStamp ;
+# 	sh-math:endTime "2012-08-01T00:00:00Z"^^xsd:dateTimeStamp.
+## group parameters
+## different features of interest
+## different dates ranges
+## different group time, it can be by day, year, week.
+
+# ex:g2 a sh-math:ObservationsGroup;
+# 	sh-math:groupByExternalEntity [ 
+# 		a sh-math:ExternalEntityExpression,
+# 		sh-math:link (sosa:hasFeatureOfInterest ex:sownIn) # area / plant
+# 	].
+
+ex:g2 a sh-math:ObservationsPlantGroup;
+	sh-math:groupByFeatureOfInterest ex:Phenoarch;
+	sh-math:groupByTime xfn:month-from-date.
+ex:g2 ex:hasPlant sh-math:Var. # a value added to the derived groups 
+
+ex:g2 sh-math:unwindProperty [
+	sh-math:path ex:sownIn;
+	sh-math:initTime ex:sowingDate ;
+	sh-math:endTime ex:harvestDate
+].
+# generic paths 
+# generic filters 	
+
+ex:o1 sosa:observedProperty ex:Temperature;
+sosa:hasResult [a qudt:QuantityValue, sosa:Result ; qudt:numericValue "279.85"^^xsd:double ; qudt:unit unit:K];
+sosa:resultTime "2016-01-01T00:00:00Z"^^xsd:dateTimeStamp ;
+sosa:hasFeatureOfInterest ex:area1.
+
+ex:o2 sosa:observedProperty ex:Temperature;
+sosa:hasResult [a qudt:QuantityValue, sosa:Result ; qudt:numericValue "250.52"^^xsd:double ; qudt:unit unit:K];
+sosa:resultTime "2016-01-02T00:00:00Z"^^xsd:dateTimeStamp ;
+sosa:hasFeatureOfInterest ex:area1.
+
+ex:o3 sosa:observedProperty ex:Temperature;
+sosa:hasResult [a qudt:QuantityValue, sosa:Result ; qudt:numericValue "15.52"^^xsd:double ; qudt:unit unit:DEG_C];
+sosa:resultTime "2016-02-03T00:00:00Z"^^xsd:dateTimeStamp ;
+sosa:hasFeatureOfInterest ex:area2.
+
+
+ex:o5 sosa:observedProperty ex:RH;
+sosa:hasResult [a qudt:QuantityValue, sosa:Result ; qudt:numericValue "555.52"^^xsd:double ; qudt:unit unit:DEG_C];
+sosa:resultTime "2016-02-03T00:00:00Z"^^xsd:dateTimeStamp ;
+sosa:hasFeatureOfInterest ex:area3.
+
+# energy 
+ex:o6 sosa:observedProperty ex:PAR;
+sosa:hasResult [a qudt:QuantityValue, sosa:Result ; qudt:numericValue "0.1"^^xsd:double ; qudt:unit unit:MicroMOL-PER-M2-SEC];
+sosa:resultTime "2012-07-14T23:30:00Z"^^xsd:dateTimeStamp ;
+sosa:hasFeatureOfInterest ex:par03_p.
+
+ex:o7 sosa:observedProperty ex:PAR;
+sosa:hasResult [a qudt:QuantityValue, sosa:Result ; qudt:numericValue "0.6"^^xsd:double ; qudt:unit unit:MicroMOL-PER-M2-SEC];
+sosa:resultTime "2012-07-14T23:45:00Z"^^xsd:dateTimeStamp ;
+sosa:hasFeatureOfInterest ex:par03_p.
+
+ex:o8 sosa:observedProperty ex:PAR;
+sosa:hasResult [a qudt:QuantityValue, sosa:Result ; qudt:numericValue "1200"^^xsd:double ; qudt:unit unit:MicroMOL-PER-M2-SEC];
+sosa:resultTime "2012-07-14T23:30:00Z"^^xsd:dateTimeStamp ;
+sosa:hasFeatureOfInterest ex:par05_p.
+
+ex:o9 sosa:observedProperty ex:PAR;
+sosa:hasResult [a qudt:QuantityValue, sosa:Result ; qudt:numericValue "0.1"^^xsd:double ; qudt:unit unit:MicroMOL-PER-M2-SEC];
+sosa:resultTime "2012-08-14T23:45:00Z"^^xsd:dateTimeStamp ;
+sosa:hasFeatureOfInterest ex:par05_p.
+
+ex:Phenoarch sh-math:hasPart ex:par03_p, ex:par05_p.
+
+ex:par03_p sh-math:collectionFrequency "00:30:00"^^xsd:time.
+ex:par05_p sh-math:collectionFrequency "00:15:00"^^xsd:time.
+
+#ex:Phenopsis sh-math:hasPart ex:area3.
+
+# plants 
+ex:plant1 a ex:Plant;
+ex:sowingDate "2012-07-14T23:30:00Z"^^xsd:dateTimeStamp;
+ex:harvestDate "2012-07-15T23:30:00Z"^^xsd:dateTimeStamp;
+ex:sownIn  ex:par03_p;
+ex:participatesIn ex:ZA16.
+
+ex:plant2 a ex:Plant;
+ex:sowingDate "2012-07-14T23:30:00Z"^^xsd:dateTimeStamp ;
+ex:harvestDate "2012-07-14T23:30:00Z"^^xsd:dateTimeStamp ;
+ex:sownIn  ex:par05_p;
+ex:participatesIn ex:ZA16.
+
+ex:plant3 a ex:Plant;
+ex:sowingDate "2012-07-14T23:30:00Z"^^xsd:dateTimeStamp ;
+ex:harvestDate "2012-07-14T23:30:00Z"^^xsd:dateTimeStamp ;
+ex:sownIn  ex:par03_p;
+ex:participatesIn ex:ZA16.
+
+# two plants pointing out to the same area
+ex:ZA16 a ex:Experiment. 
+
+# define filters to which dates correspond: (a) it can be from the data (easy approach), 
+# (b) it can be extracted from the query as a query parameter. 

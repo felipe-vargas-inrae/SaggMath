@@ -1,0 +1,23 @@
+PREFIX qudt: <http://qudt.org/schema/qudt/>
+PREFIX sosa: <http://www.w3.org/ns/sosa/>
+PREFIX ex: <http://www.example.org#>
+PREFIX  xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX sh-math:   <http://www.inrae.fr/shacl-math/> 
+
+SELECT  ?gr ?plant  ?vpd ?rs15 
+WHERE {
+    ?gr a sh-math:ObservationsPlantGroup;
+	sh-math:groupByFeatureOfInterest ex:Phenoarch;
+	ex:hasPlant ?plant;
+	ex:avgVPD ?vpd;
+	ex:DailyRs ?rs15.
+}
+
+
+# SELECT  ?fo ?gr  ?vpd 
+# WHERE {
+#     ?gr a sh-math:ObservationsGroup;
+# 	sh-math:groupByFeatureOfInterest ex:Phenoarch;
+# 	ex:avgVPD ?vpd;
+# 	#ex:DailyRs15MinStep ?rs15.
+# }

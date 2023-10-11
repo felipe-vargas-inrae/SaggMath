@@ -1,0 +1,19 @@
+{
+    "prefix" : [
+        "@prefix ex: <http://www.example.org#>.",
+        "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>. ",
+        "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>. ",
+        "@prefix xsd: <http://www.w3.org/2001/XMLSchema#>. ",
+        "@prefix dbp: <http://dbpedia.org/property/> . ",
+        "@prefix wkd: <http://www.wikidata.org/entity/>.",
+        "@prefix xsd: <http://www.w3.org/2001/XMLSchema#>."
+    ],
+    "associativeRules" :[
+        "ex:{Manip}-{Pot} a ex:Plant ;",
+        "   ex:sowingDate  \"{Sowing}\"^^xsd:dateTimeStamp;",
+        "   ex:harvestDate  \"{Harvesting}\"^^xsd:dateTimeStamp ;",
+        "   ex:sownIn ex:{Area}",
+        "   ex:scenario  \"{Scenario}\"",
+        "   ex:participatesIn ex:{Manip}."  
+    ]
+}

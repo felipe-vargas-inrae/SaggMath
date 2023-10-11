@@ -1,0 +1,280 @@
+@prefix  rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix  rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix  xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix  time: <http://www.w3.org/2006/time#>.
+@prefix  sosa: <http://www.w3.org/ns/sosa/>.
+
+@prefix  unit: <http://qudt.org/vocab/unit/>.
+@prefix  qudt: <http://qudt.org/schema/qudt/>.
+@prefix sparql: <http://datashapes.org/sparql#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+@prefix sh-math:   <http://www.inrae.fr/shacl-math/> .
+@prefix  ex: <http://www.example.org#>.
+
+#jena
+@prefix xfn: <http://www.w3.org/2005/xpath-functions#>.
+
+<http://www.example.org>
+    rdf:type owl:Ontology .
+
+sosa:Observation rdf:type rdfs:Class.
+sosa:Sensor rdf:type rdfs:Class.
+sosa:Platform rdf:type rdfs:Class.
+sosa:Platform rdf:type rdfs:Class.
+
+sh-math:ObservationsGroup rdf:type rdfs:Class.
+sh-math:ObservationsSubGroup rdf:type rdfs:Class.
+
+sh-math:ObservationsGroup rdf:subClassOf sh-math:AbstractGroup. # generelaration of groups
+
+sh-math:ObservationsGroup rdf:type sh:NodeShape;	
+	sh:rule [
+		a sh:SPARQLRule ;
+		sh:order 1;
+		rdfs:comments "this rule aims to create the group ID based on the desired grouping criterian";
+		sh:construct """
+			PREFIX  ex: <http://www.example.org#>
+			PREFIX  sosa: <http://www.w3.org/ns/sosa/>
+			PREFIX sh-math:   <http://www.inrae.fr/shacl-math/> 
+			PREFIX sparql: <http://datashapes.org/sparql#> 
+			PREFIX lfn: <http://www.dotnetrdf.org/leviathan#>
+			PREFIX afn: <http://jena.apache.org/ARQ/function#>
+			CONSTRUCT {
+				?groupIRI sh-math:hasMember ?obs.
+				?groupIRI a sh-math:ObservationsGroup.
+				?groupIRI sh-math:groupDateMethod ?method.
+				?groupIRI sh-math:groupDateValue ?value.
+				?groupIRI sh-math:groupByFeatureOfInterest ?featureGroup.
+				?groupIRI sosa:hasFeatureOfInterest ?feature.
+				?groupIRI sosa:equals ?equals1.
+				?groupIRI sosa:equalRecursive ?countTotal.
+			}
+			WHERE {
+				# group target
+				$this sh-math:groupByFeatureOfInterest ?featureGroup; # consider has part
+					sh-math:groupByTime ?method.
+				
+				# observations 
+				?obs a sosa:Observation.
+				?obs sosa:hasFeatureOfInterest ?feature;
+					sosa:resultTime ?date.
+
+				# search in the has part relationship the equality
+				# optimization: it can be an optional
+				#$this sh-math:enablePartOf ?enable.
+				
+				## has part method #####################################
+				#subquery
+				OPTIONAL {
+					SELECT ?featureGroup ?feature  (COUNT(*) AS ?partsCount)
+					{ 
+					?feature ^sh-math:hasPart+ ?featureGroup.
+					}
+					GROUP BY ?featureGroup ?feature 
+				}
+				#end subquery
+				BIND( IF(?feature = ?featureGroup , 1, 0) AS ?equals1)
+				BIND( IF(bound(?partsCount), ?partsCount, ?equals1) AS ?countTotal)
+				FILTER(?countTotal>0)
+
+				## time filter ################################################
+				OPTIONAL {
+					$this sh-math:initTime ?initTime.
+				}
+				OPTIONAL {
+					$this sh-math:endTime ?endTime.
+				}
+				BIND(IF(bound(?initTime), ?date>=?initTime, true) AS ?initDateBool)
+				BIND(IF(bound(?endTime), ?date<=?endTime, true) AS ?endDateBool)
+				FILTER(?initDateBool && ?endDateBool) 
+				# end time filter
+
+				# FEATURE IRI
+				BIND ( CONCAT ('/featureOfInterest/', afn:localname(?feature) ) AS ?featureURIPart)
+				
+				# DATE GROUP IRI 
+				BIND (sh-math:invoke(?method, ?date) AS ?value)
+				BIND (afn:localname(?method) as ?localN) 
+				BIND ( CONCAT( '/', ?localN,'/', STR(?value) ) AS ?dateGroupIRI)
+
+				# full URI 
+				BIND ( CONCAT ( 'http://group.org', ?featureURIPart, ?dateGroupIRI ) AS ?fullURI)
+
+				BIND (IRI(?fullURI) AS ?groupIRI )
+				}
+			"""].
+
+sh-math:ObservationsPlantGroup rdf:subClassOf sh-math:AbstractGroup. # generelaration of groups
+sh-math:ObservationsPlantGroup rdf:type sh:NodeShape ;	
+	sh:rule [
+		a sh:SPARQLRule ;
+		sh:order 1;
+		rdfs:comments "this rule aims to create the group ID based on the desired grouping criterian";
+		sh:construct """
+			PREFIX  ex: <http://www.example.org#>
+			PREFIX  sosa: <http://www.w3.org/ns/sosa/>
+			PREFIX sh-math:   <http://www.inrae.fr/shacl-math/> 
+			PREFIX sparql: <http://datashapes.org/sparql#> 
+			PREFIX lfn: <http://www.dotnetrdf.org/leviathan#>
+			PREFIX afn: <http://jena.apache.org/ARQ/function#>
+			CONSTRUCT {
+				?groupIRI sh-math:hasMember ?obs.
+				?groupIRI a sh-math:ObservationsPlantGroup.
+				?groupIRI ex:hasPlant ?unwindEntity.
+				?groupIRI sh-math:groupDateMethod ?method.
+				?groupIRI sh-math:groupDateValue ?value.
+				?groupIRI sh-math:groupByFeatureOfInterest ?featureGroup.
+				?groupIRI sosa:hasFeatureOfInterest ?feature.
+				?groupIRI sh-math:dateGroupIRI ?dateGroupIRI.
+				?groupIRI sh-math:plantURI ?URItextPlant.
+			}
+			WHERE {
+				# group target
+				$this sh-math:groupByFeatureOfInterest ?featureGroup;
+					sh-math:groupByTime ?method.
+
+				# observations 
+				?obs a sosa:Observation.
+				?obs sosa:hasFeatureOfInterest ?feature;
+					sosa:resultTime ?date.
+				
+				# unwind properties
+				$this sh-math:unwindProperty [
+					sh-math:path ?prop;
+					sh-math:initTime ?t1Prop ;
+					sh-math:endTime ?t2Prop
+				].
+				?unwindEntity ?prop ?feature. # ?unwindEntity can be a plant 
+				?unwindEntity ?t1Prop ?t1.
+				?unwindEntity ?t2Prop ?t2.
+				FILTER(?date >= ?t1 && ?date <= ?t2 )
+				# end unwind property
+
+				## has part method #####################################
+				#subquery
+				OPTIONAL {
+					SELECT ?featureGroup ?feature  (COUNT(*) AS ?partsCount)
+					{ 
+					?feature ^sh-math:hasPart+ ?featureGroup.
+					}
+					GROUP BY ?featureGroup ?feature 
+				}
+				#end subquery
+				BIND( IF(?feature = ?featureGroup , 1, 0) AS ?equals1)
+				BIND( IF(bound(?partsCount), ?partsCount, ?equals1) AS ?countTotal)
+				FILTER(?countTotal>0)
+
+				## time filter ################################################
+				# OPTIONAL {
+				# 	$this sh-math:initTime ?initTime.
+				# }
+				# OPTIONAL {
+				# 	$this sh-math:endTime ?endTime.
+				# }
+				# BIND(IF(bound(?initTime), ?date>=?initTime, true) AS ?initDateBool)
+				# BIND(IF(bound(?endTime), ?date<=?endTime, true) AS ?endDateBool)
+				# FILTER(?initDateBool && ?endDateBool) 
+				# end time filter #######################################""					
+				
+
+				# FEATURE IRI --- mandatory 
+				BIND ( CONCAT ('/featureOfInterest/', afn:localname(?feature) ) AS ?featureURIPart)
+				
+				# DATE GROUP IRI --- mandatory 
+				BIND (sh-math:invoke(?method, ?date) AS ?value)
+				BIND (afn:localname(?method) as ?localN) 
+				BIND ( CONCAT( '/', ?localN,'/', STR(?value) ) AS ?dateGroupIRI)
+
+				
+				# URI plant --- mandatory
+				BIND( CONCAT( '/plant/', afn:localname(?unwindEntity)) AS ?URItextPlant)
+
+				# full URI 
+				BIND ( CONCAT ( 'http://group.org', ?featureURIPart, ?URItextPlant, ?dateGroupIRI ) AS ?fullURI)
+				
+
+				BIND (IRI(?fullURI) AS ?groupIRI )
+				}
+			"""].
+
+
+# BIND (IRI(CONCAT(STR($this),'-month', STR(?month))) AS ?groupIRI )
+# BIND (IRI(CONCAT("http://group.org/", ?featureURIPart,'/method/',?localN, '/', STR(?value))) AS ?groupIRI )
+			
+
+
+sh-math:ObservationsGroup rdf:type sh:NodeShape;
+	sh:rule [
+		a sh-math:NodeRule ;
+		sh:path ex:avgVPD;
+		sh:datatype xsd:double ;
+		sh:values [
+			#sh-math:getSOSAProps(sh:this ex:Temperature)
+			# sh:path (sh-math:hasMember sosa:hasResult)
+			sh-math:avg(sh:this ex:Temperature unit:K)
+		];
+		sh:order 2;
+	].
+
+
+sh-math:ObservationsPlantGroup rdf:type sh:NodeShape, rdfs:Class;
+	sh:rule [
+		a sh-math:NodeRule ;
+		sh:path ex:avgVPD;
+		sh:datatype xsd:double ;
+		sh:values [
+			#sh-math:getSOSAProps(sh:this ex:Temperature)
+			# sh:path (sh-math:hasMember sosa:hasResult)
+			sh-math:avg(sh:this ex:Temperature unit:K)
+		];
+		sh:order 2;
+	].
+
+sh-math:ObservationsPlantGroup rdf:type sh:NodeShape, rdfs:Class;
+	sh:rule [
+		a sh-math:NodeRule ;
+		sh:path ex:DailyRs;
+		sh:datatype xsd:double ;
+		sh:values [
+			sparql:multiply (
+				[sparql:multiply ( 
+					4.95049505e-7
+					[sh-math:xsd-time-to-seconds([sh:path (sosa:hasFeatureOfInterest sh-math:collectionFrequency)])] # variable parameter from the part
+				)]
+				[sh-math:sum(sh:this ex:PAR unit:MicroMOL-PER-M2-SEC)]
+			)
+					
+		];
+		sh:order 2;
+	].
+
+
+
+# define the light formula
+
+# plant rules rely on Observation Group rules.
+# ex:Plant rdf:type sh:NodeShape, rdfs:Class;
+# 	sh:rule [
+# 		a sh-math:NodeRule ;
+# 		sh:path ex:TT;
+# 		sh:datatype xsd:double ;
+# 		sh:values [
+# 			#sh-math:getSOSAProps(sh:this ex:Temperature)
+# 			# sh:path (sh-math:hasMember sosa:hasResult)
+# 			#sh-math:avg(sh:this ex:Temperature unit:K)
+# 			sh:path (:isPartOf :avgT) - [sh:path (:hasSpecies :hasBaseTemp)] 
+# 		];
+# 		sh:order 2;
+# 	].
+
+
+# sh-math:toTargetUnit([sh-math:getSOSAProps(sh:this ex:Temperature)] unit:K)
+# sh-math:aggregate(sh:this, sparql:mean, ex:Temperature, unit:K)
+# $this sosa:hasFeatureOfInterest ?feature.
+# 				?obs sosa:hasFeatureOfInterest ?feature;
+# 				 sosa:resultTime ?date.
+# 				BIND (MONTH(?date) AS ?month)
+# 				BIND ( CONCAT(STR($this),STR(?month)) AS ?groupIRI )
+# nested equations

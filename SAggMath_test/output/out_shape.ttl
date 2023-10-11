@@ -1,0 +1,203 @@
+@prefix bkn:      <http://www.blankNode.org/variables#> .
+@prefix ex:       <http://www.example.org#> .
+@prefix lfn:      <http://www.dotnetrdf.org/leviathan#> .
+@prefix math:     <http://www.w3.org/2005/xpath-functions/math#> .
+@prefix meteo-ex: <http://www.meteo-example.org#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix qudt:     <http://qudt.org/schema/qudt/> .
+@prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:       <http://www.w3.org/ns/shacl#> .
+@prefix sh-math:  <http://www.inrae.fr/shacl-math/> .
+@prefix sosa:     <http://www.w3.org/ns/sosa/> .
+@prefix sparql:   <http://datashapes.org/sparql#> .
+@prefix time:     <http://www.w3.org/2006/time#> .
+@prefix unit:     <http://qudt.org/vocab/unit/> .
+@prefix xfn:      <http://www.w3.org/2005/xpath-functions#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+
+sh-math:ObservationsPlantGroup
+        rdf:type        rdfs:Class , sh:NodeShape ;
+        rdf:subClassOf  sh-math:AbstractGroup ;
+        sh:deactivated  false ;
+        sh:rule         [ rdf:type        sh-math:NodeRule ;
+                          sh:condition    [ sh:not  [ rdf:type     sh:PropertyShape ;
+                                                      sh:minCount  1 ;
+                                                      sh:path      ex:DailyRs
+                                                    ]
+                                          ] ;
+                          sh:datatype     xsd:double ;
+                          sh:deactivated  false ;
+                          sh:order        2 ;
+                          sh:path         ex:DailyRs ;
+                          sh:values       [ sparql:multiply  ( [ sparql:multiply  ( 4.95049505e-7
+                                                                                    [ sh-math:xsd-time-to-seconds  ( [ sh:path  ( sosa:hasFeatureOfInterest sh-math:collectionFrequency )
+                                                                                                                     ]
+                                                                                                                   )
+                                                                                    ]
+                                                                                  )
+                                                               ]
+                                                               [ sh-math:sum  ( sh:this ex:PAR unit:MicroMOL-PER-M2-SEC )
+                                                               ]
+                                                             )
+                                          ]
+                        ] ;
+        sh:rule         [ rdf:type        sh-math:NodeRule ;
+                          sh:condition    [ sh:not  [ rdf:type     sh:PropertyShape ;
+                                                      sh:minCount  1 ;
+                                                      sh:path      ex:avgVPD
+                                                    ]
+                                          ] ;
+                          sh:datatype     xsd:double ;
+                          sh:deactivated  false ;
+                          sh:order        2 ;
+                          sh:path         ex:avgVPD ;
+                          sh:values       [ sh-math:avg  ( sh:this ex:Temperature unit:K )
+                                          ]
+                        ] ;
+        sh:rule         [ rdf:type       sh:SPARQLRule ;
+                          rdfs:comments  "this rule aims to create the group ID based on the desired grouping criterian" ;
+                          sh:construct   "\n\t\t\tPREFIX  ex: <http://www.example.org#>\n\t\t\tPREFIX  sosa: <http://www.w3.org/ns/sosa/>\n\t\t\tPREFIX sh-math:   <http://www.inrae.fr/shacl-math/> \n\t\t\tPREFIX sparql: <http://datashapes.org/sparql#> \n\t\t\tPREFIX lfn: <http://www.dotnetrdf.org/leviathan#>\n\t\t\tPREFIX afn: <http://jena.apache.org/ARQ/function#>\n\t\t\tCONSTRUCT {\n\t\t\t\t?groupIRI sh-math:hasMember ?obs.\n\t\t\t\t?groupIRI a sh-math:ObservationsPlantGroup.\n\t\t\t\t?groupIRI ex:hasPlant ?unwindEntity.\n\t\t\t\t?groupIRI sh-math:groupDateMethod ?method.\n\t\t\t\t?groupIRI sh-math:groupDateValue ?value.\n\t\t\t\t?groupIRI sh-math:groupByFeatureOfInterest ?featureGroup.\n\t\t\t\t?groupIRI sosa:hasFeatureOfInterest ?feature.\n\t\t\t\t?groupIRI sh-math:dateGroupIRI ?dateGroupIRI.\n\t\t\t\t?groupIRI sh-math:plantURI ?URItextPlant.\n\t\t\t}\n\t\t\tWHERE {\n\t\t\t\t# group target\n\t\t\t\t$this sh-math:groupByFeatureOfInterest ?featureGroup;\n\t\t\t\t\tsh-math:groupByTime ?method.\n\n\t\t\t\t# observations \n\t\t\t\t?obs a sosa:Observation.\n\t\t\t\t?obs sosa:hasFeatureOfInterest ?feature;\n\t\t\t\t\tsosa:resultTime ?date.\n\t\t\t\t\n\t\t\t\t# unwind properties\n\t\t\t\t$this sh-math:unwindProperty [\n\t\t\t\t\tsh-math:path ?prop;\n\t\t\t\t\tsh-math:initTime ?t1Prop ;\n\t\t\t\t\tsh-math:endTime ?t2Prop\n\t\t\t\t].\n\t\t\t\t?unwindEntity ?prop ?feature. # ?unwindEntity can be a plant \n\t\t\t\t?unwindEntity ?t1Prop ?t1.\n\t\t\t\t?unwindEntity ?t2Prop ?t2.\n\t\t\t\tFILTER(?date >= ?t1 && ?date <= ?t2 )\n\t\t\t\t# end unwind property\n\n\t\t\t\t## has part method #####################################\n\t\t\t\t#subquery\n\t\t\t\tOPTIONAL {\n\t\t\t\t\tSELECT ?featureGroup ?feature  (COUNT(*) AS ?partsCount)\n\t\t\t\t\t{ \n\t\t\t\t\t?feature ^sh-math:hasPart+ ?featureGroup.\n\t\t\t\t\t}\n\t\t\t\t\tGROUP BY ?featureGroup ?feature \n\t\t\t\t}\n\t\t\t\t#end subquery\n\t\t\t\tBIND( IF(?feature = ?featureGroup , 1, 0) AS ?equals1)\n\t\t\t\tBIND( IF(bound(?partsCount), ?partsCount, ?equals1) AS ?countTotal)\n\t\t\t\tFILTER(?countTotal>0)\n\n\t\t\t\t## time filter ################################################\n\t\t\t\t# OPTIONAL {\n\t\t\t\t# \t$this sh-math:initTime ?initTime.\n\t\t\t\t# }\n\t\t\t\t# OPTIONAL {\n\t\t\t\t# \t$this sh-math:endTime ?endTime.\n\t\t\t\t# }\n\t\t\t\t# BIND(IF(bound(?initTime), ?date>=?initTime, true) AS ?initDateBool)\n\t\t\t\t# BIND(IF(bound(?endTime), ?date<=?endTime, true) AS ?endDateBool)\n\t\t\t\t# FILTER(?initDateBool && ?endDateBool) \n\t\t\t\t# end time filter #######################################\"\"\t\t\t\t\t\n\t\t\t\t\n\n\t\t\t\t# FEATURE IRI --- mandatory \n\t\t\t\tBIND ( CONCAT ('/featureOfInterest/', afn:localname(?feature) ) AS ?featureURIPart)\n\t\t\t\t\n\t\t\t\t# DATE GROUP IRI --- mandatory \n\t\t\t\tBIND (sh-math:invoke(?method, ?date) AS ?value)\n\t\t\t\tBIND (afn:localname(?method) as ?localN) \n\t\t\t\tBIND ( CONCAT( '/', ?localN,'/', STR(?value) ) AS ?dateGroupIRI)\n\n\t\t\t\t\n\t\t\t\t# URI plant --- mandatory\n\t\t\t\tBIND( CONCAT( '/plant/', afn:localname(?unwindEntity)) AS ?URItextPlant)\n\n\t\t\t\t# full URI \n\t\t\t\tBIND ( CONCAT ( 'http://group.org', ?featureURIPart, ?URItextPlant, ?dateGroupIRI ) AS ?fullURI)\n\t\t\t\t\n\n\t\t\t\tBIND (IRI(?fullURI) AS ?groupIRI )\n\t\t\t\t}\n\t\t\t" ;
+                          sh:order       1
+                        ] .
+
+sosa:Platform  rdf:type  rdfs:Class .
+
+sh-math:ObservationsSubGroup
+        rdf:type  rdfs:Class .
+
+sh-math:ObservationsGroup
+        rdf:type        sh:NodeShape , rdfs:Class ;
+        rdf:subClassOf  sh-math:AbstractGroup ;
+        sh:deactivated  true ;
+        sh:rule         [ rdf:type        sh-math:NodeRule ;
+                          sh:condition    [ sh:not  [ rdf:type     sh:PropertyShape ;
+                                                      sh:minCount  1 ;
+                                                      sh:path      ex:avgVPD
+                                                    ]
+                                          ] ;
+                          sh:datatype     xsd:double ;
+                          sh:deactivated  true ;
+                          sh:order        2 ;
+                          sh:path         ex:avgVPD ;
+                          sh:values       [ sh-math:avg  ( sh:this ex:Temperature unit:K )
+                                          ]
+                        ] ;
+        sh:rule         [ rdf:type       sh:SPARQLRule ;
+                          rdfs:comments  "this rule aims to create the group ID based on the desired grouping criterian" ;
+                          sh:construct   "\n\t\t\tPREFIX  ex: <http://www.example.org#>\n\t\t\tPREFIX  sosa: <http://www.w3.org/ns/sosa/>\n\t\t\tPREFIX sh-math:   <http://www.inrae.fr/shacl-math/> \n\t\t\tPREFIX sparql: <http://datashapes.org/sparql#> \n\t\t\tPREFIX lfn: <http://www.dotnetrdf.org/leviathan#>\n\t\t\tPREFIX afn: <http://jena.apache.org/ARQ/function#>\n\t\t\tCONSTRUCT {\n\t\t\t\t?groupIRI sh-math:hasMember ?obs.\n\t\t\t\t?groupIRI a sh-math:ObservationsGroup.\n\t\t\t\t?groupIRI sh-math:groupDateMethod ?method.\n\t\t\t\t?groupIRI sh-math:groupDateValue ?value.\n\t\t\t\t?groupIRI sh-math:groupByFeatureOfInterest ?featureGroup.\n\t\t\t\t?groupIRI sosa:hasFeatureOfInterest ?feature.\n\t\t\t\t?groupIRI sosa:equals ?equals1.\n\t\t\t\t?groupIRI sosa:equalRecursive ?countTotal.\n\t\t\t}\n\t\t\tWHERE {\n\t\t\t\t# group target\n\t\t\t\t$this sh-math:groupByFeatureOfInterest ?featureGroup; # consider has part\n\t\t\t\t\tsh-math:groupByTime ?method.\n\t\t\t\t\n\t\t\t\t# observations \n\t\t\t\t?obs a sosa:Observation.\n\t\t\t\t?obs sosa:hasFeatureOfInterest ?feature;\n\t\t\t\t\tsosa:resultTime ?date.\n\n\t\t\t\t# search in the has part relationship the equality\n\t\t\t\t# optimization: it can be an optional\n\t\t\t\t#$this sh-math:enablePartOf ?enable.\n\t\t\t\t\n\t\t\t\t## has part method #####################################\n\t\t\t\t#subquery\n\t\t\t\tOPTIONAL {\n\t\t\t\t\tSELECT ?featureGroup ?feature  (COUNT(*) AS ?partsCount)\n\t\t\t\t\t{ \n\t\t\t\t\t?feature ^sh-math:hasPart+ ?featureGroup.\n\t\t\t\t\t}\n\t\t\t\t\tGROUP BY ?featureGroup ?feature \n\t\t\t\t}\n\t\t\t\t#end subquery\n\t\t\t\tBIND( IF(?feature = ?featureGroup , 1, 0) AS ?equals1)\n\t\t\t\tBIND( IF(bound(?partsCount), ?partsCount, ?equals1) AS ?countTotal)\n\t\t\t\tFILTER(?countTotal>0)\n\n\t\t\t\t## time filter ################################################\n\t\t\t\tOPTIONAL {\n\t\t\t\t\t$this sh-math:initTime ?initTime.\n\t\t\t\t}\n\t\t\t\tOPTIONAL {\n\t\t\t\t\t$this sh-math:endTime ?endTime.\n\t\t\t\t}\n\t\t\t\tBIND(IF(bound(?initTime), ?date>=?initTime, true) AS ?initDateBool)\n\t\t\t\tBIND(IF(bound(?endTime), ?date<=?endTime, true) AS ?endDateBool)\n\t\t\t\tFILTER(?initDateBool && ?endDateBool) \n\t\t\t\t# end time filter\n\n\t\t\t\t# FEATURE IRI\n\t\t\t\tBIND ( CONCAT ('/featureOfInterest/', afn:localname(?feature) ) AS ?featureURIPart)\n\t\t\t\t\n\t\t\t\t# DATE GROUP IRI \n\t\t\t\tBIND (sh-math:invoke(?method, ?date) AS ?value)\n\t\t\t\tBIND (afn:localname(?method) as ?localN) \n\t\t\t\tBIND ( CONCAT( '/', ?localN,'/', STR(?value) ) AS ?dateGroupIRI)\n\n\t\t\t\t# full URI \n\t\t\t\tBIND ( CONCAT ( 'http://group.org', ?featureURIPart, ?dateGroupIRI ) AS ?fullURI)\n\n\t\t\t\tBIND (IRI(?fullURI) AS ?groupIRI )\n\t\t\t\t}\n\t\t\t" ;
+                          sh:order       1
+                        ] .
+
+sosa:Sensor  rdf:type  rdfs:Class .
+
+<http://www.example.org>
+        rdf:type  owl:Ontology .
+
+sosa:Observation  rdf:type  rdfs:Class .
+
+sh-math:getBaseUnit  rdf:type  sh:SPARQLFunction ;
+        rdfs:comment   "Get the base unit from a given unit" ;
+        sh:parameter   [ sh:datatype     qudt:Unit ;
+                         sh:description  "The input unit" ;
+                         sh:path         sh-math:op1
+                       ] ;
+        sh:returnType  qudt:Unit ;
+        sh:select      "\n        PREFIX qudt: <http://qudt.org/schema/qudt/>\n\t\tSELECT  (?unit2 AS ?result)\n        WHERE {\n            $op1  qudt:hasDimensionVector ?dimVector .\n            ?unit2 qudt:hasDimensionVector ?dimVector.\n            ?unit2  qudt:conversionMultiplier ?multiplier2 .\n            FILTER(?multiplier2= 1.0).\n            FILTER NOT EXISTS { ?unit2 qudt:conversionOffset ?offset }\n        }\n\t\t" .
+
+sh-math:sum  rdf:type  sh:SPARQLFunction ;
+        rdfs:comment   "Compute the AVG of a group of harmonised quantity values referring to an observed property. Data conforms to the SOSA ontology" ;
+        sh:parameter   [ sh:description  "The target unit used in the integration" ;
+                         sh:path         sh-math:target
+                       ] ;
+        sh:parameter   [ sh:description  "The observed property IRI" ;
+                         sh:path         sh-math:prop
+                       ] ;
+        sh:parameter   [ sh:description  "The observed property IRI" ;
+                         sh:path         sh-math:object
+                       ] ;
+        sh:returnType  xsd:double ;
+        sh:select      "\n        PREFIX qudt: <http://qudt.org/schema/qudt/>\n        PREFIX sosa: <http://www.w3.org/ns/sosa/>\n        PREFIX sh-math:   <http://www.inrae.fr/shacl-math/>\n        PREFIX  unit: <http://qudt.org/vocab/unit/>\n\t\tSELECT  (SUM(?qvH) AS ?result)\n        WHERE {\n            $object  sh-math:hasMember ?obs .\n            ?obs sosa:observedProperty $prop;\n            sosa:hasResult ?qv.\n            ?qv qudt:numericValue ?value.\n            BIND(sh-math:toTargetUnit(?qv, $target) AS ?qvH)\n        }\n\t\t" .
+
+sh-math:toBaseUnit  rdf:type  sh:SPARQLFunction ;
+        rdfs:comment   "Transform the quantity value to the base unit. The quantity can be an scale of the base unit like cm or mm, or other unit like inches" ;
+        sh:parameter   [ sh:datatype     qudt:QuantityValue ;
+                         sh:description  "The input quantity" ;
+                         sh:path         sh-math:op1
+                       ] ;
+        sh:returnType  xsd:decimal ;
+        sh:select      "\n        PREFIX qudt: <http://qudt.org/schema/qudt/>\n        SELECT   ?result\n        WHERE {\n            $op1  qudt:numericValue ?value;\n                qudt:unit ?unit.\n            ?unit  qudt:conversionMultiplier ?multiplier .\n            #Compute conversion\n            BIND( ?multiplier*?value   AS ?convertDirect)\n            OPTIONAL{\n                ?unit  qudt:conversionOffset ?offset.\n            }\n            BIND( if(bound(?offset), (?offset+?value) * ?multiplier, ?convertDirect) as ?result)\n        }\n        " .
+
+sh-math:toQUDTfromWIKIDATA
+        rdf:type       sh:SPARQLFunction ;
+        rdfs:comment   "Transform a QUDT unit into a Wikidata Unit." ;
+        sh:parameter   [ sh:datatype     xsd:double ;
+                         sh:description  "A unit of WIKIDATA" ;
+                         sh:path         sh-math:unit1
+                       ] ;
+        sh:returnType  qudt:Unit ;
+        sh:select      "\n        PREFIX qudt: <http://qudt.org/schema/qudt/>\n        PREFIX unit: <http://qudt.org/vocab/unit/>\n        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n        PREFIX wdtn: <http://www.wikidata.org/prop/direct-normalized/>\n        SELECT ?unitQUDT\n        WHERE {\n          $unit1 wdtn:P2968 ?unitQUDT\n        }\n        " .
+
+sh-math:toWIKIDATAfromQUDT
+        rdf:type       sh:SPARQLFunction ;
+        rdfs:comment   "Transform a WIKIDATA unit into a QUDT Unit." ;
+        sh:parameter   [ sh:datatype     qudt:Unit ;
+                         sh:description  "A unit of QUDT" ;
+                         sh:path         sh-math:unit1
+                       ] ;
+        sh:returnType  qudt:Unit ;
+        sh:select      "\n        PREFIX qudt: <http://qudt.org/schema/qudt/>\n        PREFIX unit: <http://qudt.org/vocab/unit/>\n        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n        PREFIX wdtn: <http://www.wikidata.org/prop/direct-normalized/>\n        SELECT ?unitWIKIDATA\n        WHERE {\n          ?unitWIKIDATA wdtn:P2968 $unit1\n        }\n        " .
+
+sh-math:toTargetUnit  rdf:type  sh:SPARQLFunction ;
+        rdfs:comment   "Transform the quantity value to a target unit." ;
+        sh:parameter   [ sh:datatype     qudt:Unit ;
+                         sh:description  "The target unit" ;
+                         sh:path         sh-math:unit2
+                       ] ;
+        sh:parameter   [ sh:datatype     qudt:QuantityValue ;
+                         sh:description  "The input quantity" ;
+                         sh:path         sh-math:op1
+                       ] ;
+        sh:returnType  xsd:decimal ;
+        sh:select      "\n        PREFIX qudt: <http://qudt.org/schema/qudt/>\n        PREFIX unit: <http://qudt.org/vocab/unit/>\n        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n        SELECT ?result\n        WHERE {\n        {\n            $op1  qudt:numericValue ?value;\n                qudt:unit ?unit1.\n            FILTER(?unit1 = $unit2)\n            BIND( ?value AS ?result )\n        }\n        UNION\n        {\n            $op1  qudt:numericValue ?value;\n                qudt:unit ?unit1.\n            FILTER(?unit1 != $unit2)\n            OPTIONAL {?unit1 qudt:conversionMultiplier ?M1 . }\n            OPTIONAL {?unit1 qudt:conversionOffset ?offset1 .  }\n            BIND( if ( bound(?offset1), ?offset1, 0.0) AS ?O1 )\n            BIND( if ( bound(?M1), ?M1, 0.0) AS ?M11 )\n            OPTIONAL {$unit2 qudt:conversionMultiplier ?M2 . }\n            OPTIONAL {$unit2 qudt:conversionOffset ?offset2 .  }\n            BIND( if ( bound(?offset2), ?offset2, 0.0) AS ?O2 )\n            BIND( if ( bound(?M2), ?M2, 1.0) AS ?M22 )\n            BIND( xsd:double ((?value + ?O1)*?M11) / xsd:double(?M22) - ?O2 AS ?result )\n        }\n        }\n        " .
+
+sh-math:avg  rdf:type  sh:SPARQLFunction ;
+        rdfs:comment   "Compute the AVG of a group of harmonised quantity values referring to an observed property. Data conforms to the SOSA ontology" ;
+        sh:parameter   [ sh:description  "The target unit used in the integration" ;
+                         sh:path         sh-math:target
+                       ] ;
+        sh:parameter   [ sh:description  "The observed property IRI" ;
+                         sh:path         sh-math:prop
+                       ] ;
+        sh:parameter   [ sh:description  "The observed property IRI" ;
+                         sh:path         sh-math:object
+                       ] ;
+        sh:returnType  xsd:double ;
+        sh:select      "\n        PREFIX qudt: <http://qudt.org/schema/qudt/>\n        PREFIX sosa: <http://www.w3.org/ns/sosa/>\n        PREFIX sh-math:   <http://www.inrae.fr/shacl-math/>\n        PREFIX  unit: <http://qudt.org/vocab/unit/>\n\t\tSELECT  (AVG(?qvH) AS ?result)\n        WHERE {\n            $object  sh-math:hasMember ?obs .\n            ?obs sosa:observedProperty $prop;\n            sosa:hasResult ?qv.\n            ?qv qudt:numericValue ?value.\n            BIND(sh-math:toTargetUnit(?qv, $target) AS ?qvH)\n        }\n\t\t" .
+
+sh-math:toTargetUnitGeneric
+        rdf:type       sh:SPARQLFunction ;
+        rdfs:comment   "Transform the quantity value to a target unit." ;
+        sh:parameter   [ sh:datatype     qudt:Unit ;
+                         sh:description  "The target unit" ;
+                         sh:path         sh-math:unit2
+                       ] ;
+        sh:parameter   [ sh:datatype     qudt:Unit ;
+                         sh:description  "The source unit" ;
+                         sh:path         sh-math:unit1
+                       ] ;
+        sh:parameter   [ sh:datatype     xsd:double ;
+                         sh:description  "The value in the current unit" ;
+                         sh:path         sh-math:quantityValue
+                       ] ;
+        sh:returnType  xsd:decimal ;
+        sh:select      "\n        PREFIX qudt: <http://qudt.org/schema/qudt/>\n        PREFIX unit: <http://qudt.org/vocab/unit/>\n        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n        SELECT ( xsd:double (($quantityValue + ?O1)*?M11) / xsd:double(?M22) - ?O2 AS ?result)\n        WHERE {\n         OPTIONAL {$unit1 qudt:conversionMultiplier ?M1 . }\n         OPTIONAL {$unit1 qudt:conversionOffset ?offset1 .  }\n         BIND( if ( bound(?offset1), ?offset1, 0.0) AS ?O1 )\n         BIND( if ( bound(?M1), ?M1, 0.0) AS ?M11 )\n\n         OPTIONAL {$unit2 qudt:conversionMultiplier ?M2 . }\n         OPTIONAL {$unit2 qudt:conversionOffset ?offset2 .  }\n         BIND( if ( bound(?offset2), ?offset2, 0.0) AS ?O2 )\n         BIND( if ( bound(?M2), ?M2, 1.0) AS ?M22 )\n        }\n        " .
+
+sh-math:xsd-time-to-seconds
+        rdf:type       sh:SPARQLFunction ;
+        rdfs:comment   "Get the total time in seconds from an xsd-time literal <HH:MM:SS> " ;
+        sh:parameter   [ sh:description  "a given xsd time" ;
+                         sh:path         sh-math:time
+                       ] ;
+        sh:returnType  xsd:double ;
+        sh:select      "\n        PREFIX xfn: <http://www.w3.org/2005/xpath-functions#>\n\t\tSELECT ?result\n        WHERE {\n            BIND(xfn:seconds-from-time($time) AS ?seconds )\n            BIND(xfn:minutes-from-time($time) AS ?minutes )\n            BIND(xfn:hours-from-time($time) AS ?hours )\n\n            BIND(?seconds + ?minutes*60 + ?hours*60*60  AS ?result)\n        }\n\t\t" .
